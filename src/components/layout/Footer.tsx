@@ -9,10 +9,11 @@ export function Footer() {
                     {/* Brand */}
                     <div className="col-span-1 md:col-span-2">
                         <Link href="/" className="flex items-center gap-2 mb-4">
-                            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
-                                <GraduationCap className="w-6 h-6 text-white" />
-                            </div>
-                            <span className="text-xl font-bold gradient-text">Rayavriti</span>
+                            <img
+                                src="/images/Lockup-color.svg"
+                                alt="Rayavriti"
+                                className="h-10"
+                            />
                         </Link>
                         <p className="text-foreground-muted text-sm leading-relaxed max-w-md">
                             Enterprise-grade training and certification programs designed to accelerate
@@ -54,13 +55,13 @@ export function Footer() {
                             </li>
                             <li className="flex items-center gap-2 text-foreground-muted text-sm">
                                 <Phone className="w-4 h-4" />
-                                <a href="tel:+919876543210" className="hover:text-foreground transition-colors">
-                                    +91 98765 43210
+                                <a href="tel:+919470865856" className="hover:text-foreground transition-colors">
+                                    +91 94708 65856
                                 </a>
                             </li>
                             <li className="flex items-start gap-2 text-foreground-muted text-sm">
                                 <MapPin className="w-4 h-4 mt-0.5" />
-                                <span>India</span>
+                                <span>Patna, Bihar, India</span>
                             </li>
                         </ul>
                     </div>

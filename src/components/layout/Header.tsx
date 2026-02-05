@@ -28,10 +28,11 @@ export function Header() {
                 <div className="flex items-center justify-between h-16">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2 group">
-                        <div className="w-10 h-10 rounded-xl bg-[#D9FD3A] flex items-center justify-center">
-                            <GraduationCap className="w-6 h-6 text-[#11110B]" />
-                        </div>
-                        <span className="text-xl font-bold text-[#D9FD3A]">Rayavriti</span>
+                        <img
+                            src="/images/Lockup-color.svg"
+                            alt="Rayavriti"
+                            className="h-10"
+                        />
                     </Link>
 
                     {/* Desktop Navigation */}

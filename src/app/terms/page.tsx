@@ -137,7 +137,7 @@ export default function TermsOfServicePage() {
                         <p className="text-foreground-muted mb-4">
                             These Terms shall be governed by and construed in accordance with the laws of India. Any
                             disputes arising from these terms shall be subject to the exclusive jurisdiction of the courts
-                            in Bangalore, Karnataka.
+                            in Patna, Bihar.
                         </p>
                     </section>
 
@@ -148,7 +148,7 @@ export default function TermsOfServicePage() {
                         </p>
                         <p className="text-foreground-muted">
                             Email: legal@rayavriti.com<br />
-                            Address: 123 Learning Street, Tech Park, Bangalore, Karnataka 560001, India
+                            Address: Patna, Bihar, India
                         </p>
                     </section>
                 </div>

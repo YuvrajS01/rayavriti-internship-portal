@@ -105,7 +105,7 @@ export default function PrivacyPolicyPage() {
                         </p>
                         <p className="text-foreground-muted">
                             Email: privacy@rayavriti.com<br />
-                            Address: 123 Learning Street, Tech Park, Bangalore, Karnataka 560001, India
+                            Address: Patna, Bihar, India
                         </p>
                     </section>
                 </div>

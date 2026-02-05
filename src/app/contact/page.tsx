@@ -96,7 +96,7 @@ export default function ContactPage() {
                                 </div>
                                 <div>
                                     <h3 className="font-semibold mb-1">Phone</h3>
-                                    <p className="text-foreground-muted">+91 98765 43210</p>
+                                    <p className="text-foreground-muted">+91 94708 65856</p>
                                     <p className="text-sm text-foreground-subtle">Mon-Fri, 9AM-6PM IST</p>
                                 </div>
                             </div>
@@ -110,9 +110,8 @@ export default function ContactPage() {
                                 <div>
                                     <h3 className="font-semibold mb-1">Address</h3>
                                     <p className="text-foreground-muted">
-                                        123 Learning Street<br />
-                                        Tech Park, Bangalore<br />
-                                        Karnataka 560001, India
+                                        Patna, Bihar<br />
+                                        India
                                     </p>
                                 </div>
                             </div>

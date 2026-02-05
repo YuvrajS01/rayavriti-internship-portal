@@ -94,7 +94,6 @@ export async function POST(request: Request) {
                 enrollmentId,
                 userName: user.name || "Unknown",
                 courseName: course.title,
-                issuedBy: session.user.id,
             })
             .returning();
 

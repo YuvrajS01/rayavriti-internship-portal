@@ -25,6 +25,11 @@ export const metadata: Metadata = {
   description:
     "Enterprise-grade training and certification programs in technology, networking, and cybersecurity. Learn from industry experts and accelerate your career.",
   keywords: ["training", "courses", "certification", "networking", "cybersecurity", "technology"],
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/images/Icon-color.svg",
+  },
 };
 
 export default function RootLayout({
