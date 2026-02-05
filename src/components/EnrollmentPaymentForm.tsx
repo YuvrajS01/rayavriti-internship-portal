@@ -39,9 +39,8 @@ export default function EnrollmentPaymentForm({ course }: { course: EnrollPagePr
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     courseId: course.id,
-                    amount: course.price,
-                    proofUrl,
                     transactionId,
+                    screenshotUrl: proofUrl,
                 }),
             });
 
@@ -66,8 +65,8 @@ export default function EnrollmentPaymentForm({ course }: { course: EnrollPagePr
                     <div key={s} className="flex items-center gap-2">
                         <div
                             className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${step >= s
-                                    ? "bg-[#D9FD3A] text-[#11110B]"
-                                    : "bg-background-tertiary text-foreground-muted"
+                                ? "bg-[#D9FD3A] text-[#11110B]"
+                                : "bg-background-tertiary text-foreground-muted"
                                 }`}
                         >
                             {step > s ? <Check className="w-4 h-4" /> : s}

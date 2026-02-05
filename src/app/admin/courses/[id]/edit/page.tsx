@@ -1,12 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Plus, Minus, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Minus, Loader2, Save } from "lucide-react";
+import { use } from "react";
 
-export default function CreateCoursePage() {
+interface Module {
+    title: string;
+    lessons: { title: string; youtubeUrl: string; duration: string }[];
+}
+
+export default function EditCoursePage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = use(params);
     const router = useRouter();
+    const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
 
@@ -23,27 +31,56 @@ export default function CreateCoursePage() {
         isFeatured: false,
     });
 
-    const [modules, setModules] = useState([
+    const [modules, setModules] = useState<Module[]>([
         {
             title: "",
             lessons: [{ title: "", youtubeUrl: "", duration: "" }],
         },
     ]);
 
+    // Fetch course data
+    useEffect(() => {
+        async function fetchCourse() {
+            try {
+                const response = await fetch(`/api/courses/${id}`);
+                if (!response.ok) throw new Error("Course not found");
+
+                const course = await response.json();
+                setFormData({
+                    title: course.title || "",
+                    slug: course.slug || "",
+                    shortDescription: course.shortDescription || "",
+                    description: course.description || "",
+                    mode: course.mode || "online",
+                    fee: course.fee || "0",
+                    duration: course.duration || "",
+                    thumbnail: course.thumbnail || "",
+                    isActive: course.isActive ?? true,
+                    isFeatured: course.isFeatured ?? false,
+                });
+
+                if (course.syllabus?.modules?.length > 0) {
+                    setModules(course.syllabus.modules);
+                }
+            } catch (err) {
+                setError(err instanceof Error ? err.message : "Failed to load course");
+            } finally {
+                setIsLoading(false);
+            }
+        }
+
+        fetchCourse();
+    }, [id]);
+
     const handleInputChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
     ) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
-
-        // Auto-generate slug from title
-        if (name === "title") {
-            const slug = value
-                .toLowerCase()
-                .replace(/[^a-z0-9]+/g, "-")
-                .replace(/(^-|-$)/g, "");
-            setFormData((prev) => ({ ...prev, slug }));
-        }
+        const { name, value, type } = e.target;
+        const checked = (e.target as HTMLInputElement).checked;
+        setFormData((prev) => ({
+            ...prev,
+            [name]: type === "checkbox" ? checked : value
+        }));
     };
 
     const addModule = () => {
@@ -94,19 +131,19 @@ export default function CreateCoursePage() {
         setError("");
 
         try {
-            const response = await fetch("/api/courses", {
-                method: "POST",
+            const response = await fetch(`/api/courses/${id}`, {
+                method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     ...formData,
-                    fee: parseFloat(formData.fee) || 0,
+                    fee: formData.fee,
                     syllabus: { modules },
                 }),
             });
 
             if (!response.ok) {
                 const data = await response.json();
-                throw new Error(data.error || "Failed to create course");
+                throw new Error(data.error || "Failed to update course");
             }
 
             router.push("/admin/courses");
@@ -117,6 +154,14 @@ export default function CreateCoursePage() {
             setIsSubmitting(false);
         }
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="w-8 h-8 animate-spin text-[#D9FD3A]" />
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-4xl">
@@ -129,7 +174,7 @@ export default function CreateCoursePage() {
                     <ArrowLeft className="w-4 h-4" />
                     Back to Courses
                 </Link>
-                <h1 className="text-2xl sm:text-3xl font-bold">Create New Course</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold">Edit Course</h1>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-8">
@@ -151,7 +196,6 @@ export default function CreateCoursePage() {
                                 value={formData.title}
                                 onChange={handleInputChange}
                                 className="input"
-                                placeholder="e.g., Complete CCNA Networking Course"
                                 required
                             />
                         </div>
@@ -164,7 +208,6 @@ export default function CreateCoursePage() {
                                 value={formData.slug}
                                 onChange={handleInputChange}
                                 className="input"
-                                placeholder="auto-generated-from-title"
                             />
                         </div>
 
@@ -176,7 +219,6 @@ export default function CreateCoursePage() {
                                 value={formData.shortDescription}
                                 onChange={handleInputChange}
                                 className="input"
-                                placeholder="Brief description for course cards"
                                 maxLength={200}
                                 required
                             />
@@ -189,7 +231,6 @@ export default function CreateCoursePage() {
                                 value={formData.description}
                                 onChange={handleInputChange}
                                 className="input min-h-[120px]"
-                                placeholder="Detailed course description..."
                             />
                         </div>
                     </div>
@@ -211,20 +252,6 @@ export default function CreateCoursePage() {
                                 <option value="offline">Offline</option>
                             </select>
                         </div>
-
-                        <label className="flex items-center gap-3 p-4 rounded-lg bg-background-tertiary cursor-pointer">
-                            <input
-                                type="checkbox"
-                                name="isActive"
-                                checked={formData.isActive}
-                                onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                                className="w-5 h-5 accent-[#D9FD3A]"
-                            />
-                            <div>
-                                <p className="font-medium">Active</p>
-                                <p className="text-sm text-foreground-muted">Publish course immediately</p>
-                            </div>
-                        </label>
 
                         <div>
                             <label className="label">Fee (₹)</label>
@@ -251,7 +278,7 @@ export default function CreateCoursePage() {
                             />
                         </div>
 
-                        <div className="sm:col-span-2">
+                        <div>
                             <label className="label">Thumbnail URL</label>
                             <input
                                 type="url"
@@ -259,9 +286,36 @@ export default function CreateCoursePage() {
                                 value={formData.thumbnail}
                                 onChange={handleInputChange}
                                 className="input"
-                                placeholder="https://example.com/image.jpg"
                             />
                         </div>
+
+                        <label className="flex items-center gap-3 p-4 rounded-lg bg-background-tertiary cursor-pointer">
+                            <input
+                                type="checkbox"
+                                name="isActive"
+                                checked={formData.isActive}
+                                onChange={handleInputChange}
+                                className="w-5 h-5 accent-[#D9FD3A]"
+                            />
+                            <div>
+                                <p className="font-medium">Active</p>
+                                <p className="text-sm text-foreground-muted">Course is visible to users</p>
+                            </div>
+                        </label>
+
+                        <label className="flex items-center gap-3 p-4 rounded-lg bg-background-tertiary cursor-pointer">
+                            <input
+                                type="checkbox"
+                                name="isFeatured"
+                                checked={formData.isFeatured}
+                                onChange={handleInputChange}
+                                className="w-5 h-5 accent-[#D9FD3A]"
+                            />
+                            <div>
+                                <p className="font-medium">Featured</p>
+                                <p className="text-sm text-foreground-muted">Show on homepage</p>
+                            </div>
+                        </label>
                     </div>
                 </div>
 
@@ -375,10 +429,13 @@ export default function CreateCoursePage() {
                         {isSubmitting ? (
                             <>
                                 <Loader2 className="w-5 h-5 animate-spin" />
-                                Creating...
+                                Saving...
                             </>
                         ) : (
-                            "Create Course"
+                            <>
+                                <Save className="w-5 h-5" />
+                                Save Changes
+                            </>
                         )}
                     </button>
                     <Link href="/admin/courses" className="btn btn-secondary">

@@ -132,7 +132,7 @@ export default async function CourseDetailPage({
                                 {/* CTA */}
                                 {session ? (
                                     <Link
-                                        href={`/dashboard/enroll/${course.slug}`}
+                                        href={`/courses/${course.slug}/enroll`}
                                         className="btn btn-primary w-full py-4 text-base"
                                     >
                                         Enroll Now

@@ -120,6 +120,7 @@ export default async function PaymentsPage() {
                                 <th className="text-left p-4 font-medium text-foreground-muted">User</th>
                                 <th className="text-left p-4 font-medium text-foreground-muted">Course</th>
                                 <th className="text-left p-4 font-medium text-foreground-muted">Amount</th>
+                                <th className="text-left p-4 font-medium text-foreground-muted">Payment Details</th>
                                 <th className="text-left p-4 font-medium text-foreground-muted">Status</th>
                                 <th className="text-left p-4 font-medium text-foreground-muted">Date</th>
                                 <th className="text-left p-4 font-medium text-foreground-muted">Actions</th>
@@ -143,6 +144,28 @@ export default async function PaymentsPage() {
                                     </td>
                                     <td className="p-4 font-medium">
                                         {formatCurrency(payment.amount)}
+                                    </td>
+                                    <td className="p-4">
+                                        <div className="space-y-1">
+                                            {payment.transactionId ? (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs text-foreground-muted">TXN:</span>
+                                                    <span className="font-mono text-sm">{payment.transactionId}</span>
+                                                </div>
+                                            ) : (
+                                                <span className="text-xs text-foreground-muted">No TXN ID</span>
+                                            )}
+                                            {payment.screenshotUrl && (
+                                                <Link
+                                                    href={payment.screenshotUrl}
+                                                    target="_blank"
+                                                    className="inline-flex items-center gap-1 text-xs text-[#D9FD3A] hover:underline"
+                                                >
+                                                    <ImageIcon className="w-3 h-3" />
+                                                    View Proof
+                                                </Link>
+                                            )}
+                                        </div>
                                     </td>
                                     <td className="p-4">
                                         <span
@@ -205,7 +228,7 @@ export default async function PaymentsPage() {
 
                             {allPayments.length === 0 && (
                                 <tr>
-                                    <td colSpan={6} className="p-8 text-center text-foreground-muted">
+                                    <td colSpan={7} className="p-8 text-center text-foreground-muted">
                                         No payment submissions yet.
                                     </td>
                                 </tr>

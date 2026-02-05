@@ -1,31 +1,59 @@
-import Link from "next/link";
-import { Users as UsersIcon, Search, MoreHorizontal, Mail, Shield, Ban, CheckCircle } from "lucide-react";
-import { db, users } from "@/db";
-import { desc, sql } from "drizzle-orm";
+"use client";
 
-export const dynamic = "force-dynamic";
+import { useState, useEffect } from "react";
+import { Users as UsersIcon, Shield, CheckCircle } from "lucide-react";
+import { UserActions } from "./UserActions";
 
-async function getUsers() {
-    return await db
-        .select()
-        .from(users)
-        .orderBy(desc(users.createdAt));
+interface User {
+    id: string;
+    name: string | null;
+    email: string;
+    role: string;
+    mobile: string | null;
+    createdAt: string;
 }
 
-async function getUserStats() {
-    const result = await db
-        .select({
-            total: sql<number>`count(*)`,
-            admins: sql<number>`count(*) filter (where role = 'admin')`,
-            thisMonth: sql<number>`count(*) filter (where created_at >= date_trunc('month', current_date))`,
-        })
-        .from(users);
-
-    return result[0];
+interface Stats {
+    total: number;
+    admins: number;
+    thisMonth: number;
 }
 
-export default async function UsersManagementPage() {
-    const [allUsers, stats] = await Promise.all([getUsers(), getUserStats()]);
+export default function UsersManagementPage() {
+    const [users, setUsers] = useState<User[]>([]);
+    const [stats, setStats] = useState<Stats>({ total: 0, admins: 0, thisMonth: 0 });
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchData = async () => {
+        try {
+            const response = await fetch("/api/users");
+            if (response.ok) {
+                const data = await response.json();
+                setUsers(data.users);
+                setStats(data.stats);
+            }
+        } catch (error) {
+            console.error("Failed to fetch users:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const handleUpdate = () => {
+        fetchData();
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="w-8 h-8 border-2 border-[#D9FD3A] border-t-transparent rounded-full animate-spin" />
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -47,7 +75,7 @@ export default async function UsersManagementPage() {
                             <UsersIcon className="w-5 h-5 text-[#D9FD3A]" />
                         </div>
                         <div>
-                            <p className="text-2xl font-bold">{stats?.total || 0}</p>
+                            <p className="text-2xl font-bold">{stats.total}</p>
                             <p className="text-sm text-foreground-muted">Total Users</p>
                         </div>
                     </div>
@@ -59,7 +87,7 @@ export default async function UsersManagementPage() {
                             <Shield className="w-5 h-5 text-info" />
                         </div>
                         <div>
-                            <p className="text-2xl font-bold">{stats?.admins || 0}</p>
+                            <p className="text-2xl font-bold">{stats.admins}</p>
                             <p className="text-sm text-foreground-muted">Admins</p>
                         </div>
                     </div>
@@ -71,7 +99,7 @@ export default async function UsersManagementPage() {
                             <CheckCircle className="w-5 h-5 text-success" />
                         </div>
                         <div>
-                            <p className="text-2xl font-bold">{stats?.thisMonth || 0}</p>
+                            <p className="text-2xl font-bold">{stats.thisMonth}</p>
                             <p className="text-sm text-foreground-muted">New This Month</p>
                         </div>
                     </div>
@@ -92,7 +120,7 @@ export default async function UsersManagementPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {allUsers.map((user) => (
+                            {users.map((user) => (
                                 <tr key={user.id} className="border-b border-border hover:bg-background-tertiary/50 transition-colors">
                                     <td className="p-4">
                                         <div className="flex items-center gap-3">
@@ -106,10 +134,7 @@ export default async function UsersManagementPage() {
                                         </div>
                                     </td>
                                     <td className="p-4">
-                                        <span
-                                            className={`badge ${user.role === "admin" ? "badge-info" : ""
-                                                }`}
-                                        >
+                                        <span className={`badge ${user.role === "admin" ? "badge-info" : ""}`}>
                                             {user.role}
                                         </span>
                                     </td>
@@ -124,24 +149,18 @@ export default async function UsersManagementPage() {
                                         })}
                                     </td>
                                     <td className="p-4">
-                                        <div className="flex items-center gap-2">
-                                            <button className="btn btn-ghost p-2" title="Email User">
-                                                <Mail className="w-4 h-4" />
-                                            </button>
-                                            {user.role !== "admin" && (
-                                                <button className="btn btn-ghost p-2" title="Make Admin">
-                                                    <Shield className="w-4 h-4" />
-                                                </button>
-                                            )}
-                                            <button className="btn btn-ghost p-2" title="More Options">
-                                                <MoreHorizontal className="w-4 h-4" />
-                                            </button>
-                                        </div>
+                                        <UserActions
+                                            user={{
+                                                ...user,
+                                                createdAt: new Date(user.createdAt),
+                                            }}
+                                            onUpdate={handleUpdate}
+                                        />
                                     </td>
                                 </tr>
                             ))}
 
-                            {allUsers.length === 0 && (
+                            {users.length === 0 && (
                                 <tr>
                                     <td colSpan={5} className="p-8 text-center text-foreground-muted">
                                         No users found.

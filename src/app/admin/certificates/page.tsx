@@ -47,7 +47,7 @@ export default async function CertificatesManagementPage() {
                         Issue and manage course completion certificates.
                     </p>
                 </div>
-                <Link href="/admin/certificates/issue" className="btn btn-primary">
+                <Link href="/admin/certificates/generate" className="btn btn-primary">
                     <Plus className="w-5 h-5" />
                     Issue Certificate
                 </Link>
