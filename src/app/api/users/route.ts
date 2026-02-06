@@ -14,9 +14,19 @@ export async function GET() {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // Get all users
+        // Get all users (excluding password)
         const allUsers = await db
-            .select()
+            .select({
+                id: users.id,
+                name: users.name,
+                email: users.email,
+                mobile: users.mobile,
+                role: users.role,
+                emailVerified: users.emailVerified,
+                image: users.image,
+                createdAt: users.createdAt,
+                updatedAt: users.updatedAt,
+            })
             .from(users)
             .orderBy(desc(users.createdAt));
 

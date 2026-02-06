@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { db, courses, enrollments, payments, certificates } from "@/db";
+import { db, courses } from "@/db";
 import { eq } from "drizzle-orm";
+import { validateUUID, courseUpdateSchema } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,12 @@ export async function DELETE(
         }
 
         const { id } = await params;
+
+        // Validate UUID format
+        const validation = validateUUID(id);
+        if (!validation.valid) {
+            return NextResponse.json({ error: validation.error }, { status: 400 });
+        }
 
         // Check if course exists
         const [course] = await db
@@ -50,6 +57,12 @@ export async function GET(
 ) {
     try {
         const { id } = await params;
+
+        // Validate UUID format
+        const validation = validateUUID(id);
+        if (!validation.valid) {
+            return NextResponse.json({ error: validation.error }, { status: 400 });
+        }
 
         const [course] = await db
             .select()
@@ -84,7 +97,25 @@ export async function PUT(
         }
 
         const { id } = await params;
+
+        // Validate UUID format
+        const uuidValidation = validateUUID(id);
+        if (!uuidValidation.valid) {
+            return NextResponse.json({ error: uuidValidation.error }, { status: 400 });
+        }
+
         const body = await request.json();
+
+        // Validate input
+        const result = courseUpdateSchema.safeParse(body);
+        if (!result.success) {
+            return NextResponse.json(
+                { error: "Validation failed", details: result.error.flatten() },
+                { status: 400 }
+            );
+        }
+
+        const data = result.data;
 
         // Check if course exists
         const [existing] = await db
@@ -97,21 +128,21 @@ export async function PUT(
             return NextResponse.json({ error: "Course not found" }, { status: 404 });
         }
 
-        // Update course
+        // Update course with validated data
         const [updated] = await db
             .update(courses)
             .set({
-                title: body.title,
-                slug: body.slug,
-                description: body.description,
-                shortDescription: body.shortDescription,
-                thumbnail: body.thumbnail,
-                syllabus: body.syllabus,
-                mode: body.mode,
-                fee: body.fee?.toString() || "0",
-                duration: body.duration,
-                isActive: body.isActive ?? true,
-                isFeatured: body.isFeatured ?? false,
+                title: data.title ?? existing.title,
+                slug: data.slug ?? existing.slug,
+                description: data.description ?? existing.description,
+                shortDescription: data.shortDescription ?? existing.shortDescription,
+                thumbnail: data.thumbnail ?? existing.thumbnail,
+                syllabus: data.syllabus ?? existing.syllabus,
+                mode: data.mode ?? existing.mode,
+                fee: data.fee?.toString() ?? existing.fee,
+                duration: data.duration ?? existing.duration,
+                isActive: data.isActive ?? existing.isActive,
+                isFeatured: data.isFeatured ?? existing.isFeatured,
                 updatedAt: new Date(),
             })
             .where(eq(courses.id, id))
@@ -126,3 +157,4 @@ export async function PUT(
         );
     }
 }
+

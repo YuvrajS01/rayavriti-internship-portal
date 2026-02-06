@@ -2,15 +2,10 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db, certificates, users, courses, enrollments } from "@/db";
 import { eq, and } from "drizzle-orm";
+import { validateUUID } from "@/lib/validations";
+import { generateCertificateId } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
-
-// Generate a certificate ID
-function generateCertificateId(): string {
-    const year = new Date().getFullYear();
-    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-    return `RAY-${year}-${random}`;
-}
 
 // Create a new certificate
 export async function POST(request: Request) {
@@ -27,6 +22,39 @@ export async function POST(request: Request) {
         if (!userId || !courseId || !enrollmentId) {
             return NextResponse.json(
                 { error: "Missing required fields" },
+                { status: 400 }
+            );
+        }
+
+        // Validate UUID formats
+        const userIdValidation = validateUUID(userId);
+        const courseIdValidation = validateUUID(courseId);
+        const enrollmentIdValidation = validateUUID(enrollmentId);
+
+        if (!userIdValidation.valid || !courseIdValidation.valid || !enrollmentIdValidation.valid) {
+            return NextResponse.json(
+                { error: "Invalid ID format" },
+                { status: 400 }
+            );
+        }
+
+        // Validate enrollment exists and is completed
+        const [enrollment] = await db
+            .select()
+            .from(enrollments)
+            .where(eq(enrollments.id, enrollmentId))
+            .limit(1);
+
+        if (!enrollment) {
+            return NextResponse.json(
+                { error: "Enrollment not found" },
+                { status: 404 }
+            );
+        }
+
+        if (enrollment.status !== "completed") {
+            return NextResponse.json(
+                { error: "Certificate can only be issued for completed courses" },
                 { status: 400 }
             );
         }
@@ -70,10 +98,12 @@ export async function POST(request: Request) {
             );
         }
 
-        // Generate unique certificate ID
+        // Generate unique certificate ID with collision protection
         let certificateId = generateCertificateId();
         let attempts = 0;
-        while (attempts < 10) {
+        const maxAttempts = 10;
+
+        while (attempts < maxAttempts) {
             const [exists] = await db
                 .select()
                 .from(certificates)
@@ -82,6 +112,14 @@ export async function POST(request: Request) {
             if (!exists) break;
             certificateId = generateCertificateId();
             attempts++;
+        }
+
+        // Fail if unique ID could not be generated
+        if (attempts >= maxAttempts) {
+            return NextResponse.json(
+                { error: "Failed to generate unique certificate ID. Please try again." },
+                { status: 500 }
+            );
         }
 
         // Create certificate
@@ -106,3 +144,4 @@ export async function POST(request: Request) {
         );
     }
 }
+

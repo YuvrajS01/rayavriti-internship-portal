@@ -118,10 +118,24 @@ export async function POST(request: Request) {
             })
             .where(eq(enrollments.id, enrollmentId));
 
-        // Get the course slug to redirect back
-        const referer = request.headers.get("referer") || "/dashboard/courses";
+        // Redirect back to course page (with open redirect protection)
+        const referer = request.headers.get("referer");
+        const baseUrl = new URL(request.url).origin;
+        let redirectUrl = "/dashboard/courses";
 
-        return NextResponse.redirect(referer, { status: 303 });
+        if (referer) {
+            try {
+                const refererUrl = new URL(referer);
+                // Only allow redirects to same origin
+                if (refererUrl.origin === baseUrl) {
+                    redirectUrl = referer;
+                }
+            } catch {
+                // Invalid URL, use default
+            }
+        }
+
+        return NextResponse.redirect(redirectUrl, { status: 303 });
     } catch (error) {
         console.error("Error updating progress:", error);
         return NextResponse.json(

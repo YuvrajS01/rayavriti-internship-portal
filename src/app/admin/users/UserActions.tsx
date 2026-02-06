@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Shield, Trash2, ToggleLeft, ToggleRight, Loader2 } from "lucide-react";
+import { Mail, Shield, Trash2, ToggleRight, Loader2, AlertCircle, X } from "lucide-react";
 
 interface User {
     id: string;
@@ -19,12 +19,14 @@ interface UserActionsProps {
 
 export function UserActions({ user, onUpdate }: UserActionsProps) {
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleMakeAdmin = async () => {
         if (!confirm(`Are you sure you want to make ${user.name || user.email} an admin?`)) {
             return;
         }
         setIsLoading(true);
+        setError(null);
         try {
             const response = await fetch(`/api/users/${user.id}/role`, {
                 method: "PUT",
@@ -33,9 +35,12 @@ export function UserActions({ user, onUpdate }: UserActionsProps) {
             });
             if (response.ok) {
                 onUpdate();
+            } else {
+                const data = await response.json();
+                setError(data.error || "Failed to update role");
             }
-        } catch (error) {
-            console.error("Failed to update role:", error);
+        } catch {
+            setError("Network error. Please try again.");
         } finally {
             setIsLoading(false);
         }
@@ -46,6 +51,7 @@ export function UserActions({ user, onUpdate }: UserActionsProps) {
             return;
         }
         setIsLoading(true);
+        setError(null);
         try {
             const response = await fetch(`/api/users/${user.id}/role`, {
                 method: "PUT",
@@ -54,9 +60,12 @@ export function UserActions({ user, onUpdate }: UserActionsProps) {
             });
             if (response.ok) {
                 onUpdate();
+            } else {
+                const data = await response.json();
+                setError(data.error || "Failed to update role");
             }
-        } catch (error) {
-            console.error("Failed to update role:", error);
+        } catch {
+            setError("Network error. Please try again.");
         } finally {
             setIsLoading(false);
         }
@@ -67,15 +76,19 @@ export function UserActions({ user, onUpdate }: UserActionsProps) {
             return;
         }
         setIsLoading(true);
+        setError(null);
         try {
             const response = await fetch(`/api/users/${user.id}`, {
                 method: "DELETE",
             });
             if (response.ok) {
                 onUpdate();
+            } else {
+                const data = await response.json();
+                setError(data.error || "Failed to delete user");
             }
-        } catch (error) {
-            console.error("Failed to delete user:", error);
+        } catch {
+            setError("Network error. Please try again.");
         } finally {
             setIsLoading(false);
         }
@@ -90,38 +103,50 @@ export function UserActions({ user, onUpdate }: UserActionsProps) {
     }
 
     return (
-        <div className="flex items-center gap-2">
-            <a
-                href={`mailto:${user.email}`}
-                className="btn btn-ghost p-2"
-                title="Email User"
-            >
-                <Mail className="w-4 h-4" />
-            </a>
-            {user.role === "admin" ? (
-                <button
-                    onClick={handleRemoveAdmin}
-                    className="btn btn-ghost p-2 text-warning"
-                    title="Remove Admin"
-                >
-                    <ToggleRight className="w-4 h-4" />
-                </button>
-            ) : (
-                <button
-                    onClick={handleMakeAdmin}
-                    className="btn btn-ghost p-2"
-                    title="Make Admin"
-                >
-                    <Shield className="w-4 h-4" />
-                </button>
+        <div className="flex flex-col gap-1">
+            {error && (
+                <div className="flex items-center gap-1 text-xs text-error bg-error/10 px-2 py-1 rounded">
+                    <AlertCircle className="w-3 h-3" />
+                    <span className="flex-1">{error}</span>
+                    <button onClick={() => setError(null)} className="hover:opacity-70">
+                        <X className="w-3 h-3" />
+                    </button>
+                </div>
             )}
-            <button
-                onClick={handleDelete}
-                className="btn btn-ghost p-2 text-error hover:bg-error/10"
-                title="Delete User"
-            >
-                <Trash2 className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-2">
+                <a
+                    href={`mailto:${user.email}`}
+                    className="btn btn-ghost p-2"
+                    title="Email User"
+                >
+                    <Mail className="w-4 h-4" />
+                </a>
+                {user.role === "admin" ? (
+                    <button
+                        onClick={handleRemoveAdmin}
+                        className="btn btn-ghost p-2 text-warning"
+                        title="Remove Admin"
+                    >
+                        <ToggleRight className="w-4 h-4" />
+                    </button>
+                ) : (
+                    <button
+                        onClick={handleMakeAdmin}
+                        className="btn btn-ghost p-2"
+                        title="Make Admin"
+                    >
+                        <Shield className="w-4 h-4" />
+                    </button>
+                )}
+                <button
+                    onClick={handleDelete}
+                    className="btn btn-ghost p-2 text-error hover:bg-error/10"
+                    title="Delete User"
+                >
+                    <Trash2 className="w-4 h-4" />
+                </button>
+            </div>
         </div>
     );
 }
+

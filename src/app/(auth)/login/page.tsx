@@ -28,17 +28,23 @@ function LoginForm() {
     const onSubmit = async (data: LoginInput) => {
         setError(null);
 
-        const result = await signIn("credentials", {
-            email: data.email,
-            password: data.password,
-            redirect: false,
-        });
+        try {
+            const result = await signIn("credentials", {
+                email: data.email,
+                password: data.password,
+                redirect: false,
+            });
 
-        if (result?.error) {
-            setError("Invalid email or password");
-        } else {
+            if (result?.error) {
+                setError("Invalid email or password");
+                return;
+            }
+
             // Fetch the session to check user role
             const response = await fetch("/api/auth/session");
+            if (!response.ok) {
+                throw new Error("Failed to fetch session");
+            }
             const session = await response.json();
 
             // Redirect based on role
@@ -48,6 +54,8 @@ function LoginForm() {
                 router.push(callbackUrl);
             }
             router.refresh();
+        } catch {
+            setError("Something went wrong. Please try again.");
         }
     };
 

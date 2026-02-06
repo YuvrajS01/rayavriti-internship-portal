@@ -93,3 +93,42 @@ export const progressUpdateSchema = z.object({
 });
 
 export type ProgressUpdateInput = z.infer<typeof progressUpdateSchema>;
+
+// ================================================
+// COMMON SCHEMAS
+// ================================================
+export const uuidSchema = z.string().uuid("Invalid ID format");
+
+/**
+ * Validates a UUID parameter from API routes
+ * @returns validated UUID string or null if invalid
+ */
+export function validateUUID(id: string): { valid: true; id: string } | { valid: false; error: string } {
+    const result = uuidSchema.safeParse(id);
+    if (!result.success) {
+        return { valid: false, error: "Invalid ID format" };
+    }
+    return { valid: true, id: result.data };
+}
+
+// ================================================
+// COURSE UPDATE SCHEMA (partial for updates)
+// ================================================
+export const courseUpdateSchema = z.object({
+    title: z.string().min(3, "Title must be at least 3 characters").optional(),
+    slug: z.string().min(1).optional(),
+    description: z.string().optional(),
+    shortDescription: z.string().max(500, "Short description must be less than 500 characters").optional(),
+    thumbnail: z.string().url().optional().or(z.literal("")),
+    mode: z.enum(["online", "offline"]).optional(),
+    fee: z.coerce.number().min(0, "Fee must be a positive number").optional(),
+    duration: z.string().optional(),
+    youtubePlaylistUrl: z.string().url().optional().or(z.literal("")),
+    syllabus: z.object({
+        modules: z.array(moduleSchema),
+    }).optional(),
+    isActive: z.boolean().optional(),
+    isFeatured: z.boolean().optional(),
+});
+
+export type CourseUpdateInput = z.infer<typeof courseUpdateSchema>;

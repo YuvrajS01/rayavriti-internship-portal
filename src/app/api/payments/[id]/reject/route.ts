@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { db, payments, enrollments } from "@/db";
-import { eq, and } from "drizzle-orm";
+import { validateUUID } from "@/lib/validations";
+import { processPaymentVerification } from "@/lib/services/payment";
 
 export const dynamic = "force-dynamic";
 
@@ -19,44 +19,18 @@ export async function POST(
 
         const { id } = await params;
 
-        // Get the payment
-        const [payment] = await db
-            .select()
-            .from(payments)
-            .where(eq(payments.id, id))
-            .limit(1);
-
-        if (!payment) {
-            return NextResponse.json({ error: "Payment not found" }, { status: 404 });
+        // Validate UUID format
+        const validation = validateUUID(id);
+        if (!validation.valid) {
+            return NextResponse.json({ error: validation.error }, { status: 400 });
         }
 
-        if (payment.status !== "pending") {
-            return NextResponse.json(
-                { error: "Payment already processed" },
-                { status: 400 }
-            );
+        // Process payment rejection using shared service
+        const result = await processPaymentVerification(id, "rejected", session.user.id);
+
+        if (!result.success) {
+            return NextResponse.json({ error: result.error }, { status: result.status });
         }
-
-        // Update payment status
-        await db
-            .update(payments)
-            .set({
-                status: "rejected",
-                verifiedAt: new Date(),
-                verifiedBy: session.user.id,
-            })
-            .where(eq(payments.id, id));
-
-        // Cancel the enrollment by userId and courseId
-        await db
-            .update(enrollments)
-            .set({ status: "cancelled" })
-            .where(
-                and(
-                    eq(enrollments.userId, payment.userId),
-                    eq(enrollments.courseId, payment.courseId)
-                )
-            );
 
         // Redirect back to payments page
         return NextResponse.redirect(new URL("/admin/payments", request.url));
@@ -68,3 +42,4 @@ export async function POST(
         );
     }
 }
+

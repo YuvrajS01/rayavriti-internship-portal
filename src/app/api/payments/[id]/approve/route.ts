@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { db, payments, enrollments } from "@/db";
-import { eq, and } from "drizzle-orm";
+import { validateUUID } from "@/lib/validations";
+import { processPaymentVerification } from "@/lib/services/payment";
 
 export const dynamic = "force-dynamic";
 
@@ -19,60 +19,17 @@ export async function POST(
 
         const { id } = await params;
 
-        // Get the payment
-        const [payment] = await db
-            .select()
-            .from(payments)
-            .where(eq(payments.id, id))
-            .limit(1);
-
-        if (!payment) {
-            return NextResponse.json({ error: "Payment not found" }, { status: 404 });
+        // Validate UUID format
+        const validation = validateUUID(id);
+        if (!validation.valid) {
+            return NextResponse.json({ error: validation.error }, { status: 400 });
         }
 
-        if (payment.status !== "pending") {
-            return NextResponse.json(
-                { error: "Payment already processed" },
-                { status: 400 }
-            );
-        }
+        // Process payment approval using shared service
+        const result = await processPaymentVerification(id, "approved", session.user.id);
 
-        // Update payment status
-        await db
-            .update(payments)
-            .set({
-                status: "approved",
-                verifiedAt: new Date(),
-                verifiedBy: session.user.id,
-            })
-            .where(eq(payments.id, id));
-
-        // Check if enrollment exists
-        const [existingEnrollment] = await db
-            .select()
-            .from(enrollments)
-            .where(
-                and(
-                    eq(enrollments.userId, payment.userId),
-                    eq(enrollments.courseId, payment.courseId)
-                )
-            )
-            .limit(1);
-
-        if (existingEnrollment) {
-            // Update existing enrollment to active
-            await db
-                .update(enrollments)
-                .set({ status: "active" })
-                .where(eq(enrollments.id, existingEnrollment.id));
-        } else {
-            // Create new enrollment
-            await db.insert(enrollments).values({
-                userId: payment.userId,
-                courseId: payment.courseId,
-                status: "active",
-                progressPercentage: 0,
-            });
+        if (!result.success) {
+            return NextResponse.json({ error: result.error }, { status: result.status });
         }
 
         // Redirect back to payments page
@@ -85,3 +42,4 @@ export async function POST(
         );
     }
 }
+

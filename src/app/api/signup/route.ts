@@ -3,9 +3,21 @@ import bcrypt from "bcryptjs";
 import { db, users } from "@/db";
 import { eq, or } from "drizzle-orm";
 import { signupSchema } from "@/lib/validations";
+import { signupRateLimiter, getClientIP, rateLimitHeaders } from "@/lib/ratelimit";
 
 export async function POST(req: NextRequest) {
     try {
+        // Rate limiting: 3 signups per hour per IP
+        const ip = getClientIP(req);
+        const rateLimit = signupRateLimiter.limit(ip);
+
+        if (!rateLimit.success) {
+            return NextResponse.json(
+                { error: "Too many signup attempts. Please try again later." },
+                { status: 429, headers: rateLimitHeaders(rateLimit) }
+            );
+        }
+
         const body = await req.json();
 
         // Validate input

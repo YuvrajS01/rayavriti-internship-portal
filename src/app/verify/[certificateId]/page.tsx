@@ -18,10 +18,10 @@ async function getCertificate(id: string) {
 export default async function VerifyCertificatePage({
     params,
 }: {
-    params: Promise<{ id: string }>;
+    params: Promise<{ certificateId: string }>;
 }) {
-    const { id } = await params;
-    const certificate = await getCertificate(id);
+    const { certificateId } = await params;
+    const certificate = await getCertificate(certificateId);
 
     if (!certificate) {
         notFound();

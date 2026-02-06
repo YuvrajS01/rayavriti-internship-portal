@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db, users } from "@/db";
 import { eq } from "drizzle-orm";
+import { validateUUID } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +19,12 @@ export async function DELETE(
         }
 
         const { id } = await params;
+
+        // Validate UUID format
+        const validation = validateUUID(id);
+        if (!validation.valid) {
+            return NextResponse.json({ error: validation.error }, { status: 400 });
+        }
 
         // Cannot delete self
         if (id === session.user.id) {
@@ -38,3 +45,4 @@ export async function DELETE(
         );
     }
 }
+
