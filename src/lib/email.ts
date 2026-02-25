@@ -1,8 +1,5 @@
 import { Resend } from "resend";
 
-// Initialize Resend client
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const FROM_EMAIL = process.env.EMAIL_FROM || "onboarding@resend.dev";
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "Rayavriti Learning";
 
@@ -11,6 +8,14 @@ const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "Rayavriti Learning";
  */
 export async function sendOTPEmail(email: string, otp: string, name: string): Promise<{ success: boolean; error?: string }> {
     try {
+        const apiKey = process.env.RESEND_API_KEY;
+        if (!apiKey) {
+            console.warn("RESEND_API_KEY is not set. Skipping email send.");
+            return { success: false, error: "Email service not configured" };
+        }
+
+        const resend = new Resend(apiKey);
+
         const { error } = await resend.emails.send({
             from: `${APP_NAME} <${FROM_EMAIL}>`,
             to: email,
