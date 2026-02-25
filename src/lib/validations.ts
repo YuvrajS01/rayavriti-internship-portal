@@ -33,6 +33,21 @@ export type SignupInput = z.infer<typeof signupSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 
 // ================================================
+// OTP SCHEMAS
+// ================================================
+export const otpVerifySchema = z.object({
+    email: z.string().email("Please enter a valid email"),
+    otp: z.string().length(6, "OTP must be 6 digits").regex(/^\d{6}$/, "OTP must be numeric"),
+});
+
+export const otpResendSchema = z.object({
+    email: z.string().email("Please enter a valid email"),
+});
+
+export type OTPVerifyInput = z.infer<typeof otpVerifySchema>;
+export type OTPResendInput = z.infer<typeof otpResendSchema>;
+
+// ================================================
 // COURSE SCHEMAS
 // ================================================
 export const lessonSchema = z.object({

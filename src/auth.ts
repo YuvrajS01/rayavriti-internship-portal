@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { db, users } from "@/db";
@@ -21,6 +22,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         maxAge: 30 * 24 * 60 * 60, // 30 days
     },
     providers: [
+        Google({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        }),
         Credentials({
             name: "credentials",
             credentials: {
@@ -47,6 +52,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     return null;
                 }
 
+                // Check if user has a password (OAuth-only users don't)
+                if (!user.password) {
+                    return null;
+                }
+
+                // Check if email is verified
+                if (!user.emailVerified) {
+                    throw new Error("EMAIL_NOT_VERIFIED");
+                }
+
                 // Verify password
                 const isValid = await bcrypt.compare(password, user.password);
                 if (!isValid) {
@@ -65,11 +80,60 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }),
     ],
     callbacks: {
-        async jwt({ token, user }) {
-            // Persist user data to token on login
-            if (user) {
-                token.id = user.id as string;
-                token.role = (user as { role: string }).role;
+        async signIn({ user, account }) {
+            // Handle Google OAuth sign-in
+            if (account?.provider === "google") {
+                if (!user.email) return false;
+
+                const email = user.email.toLowerCase();
+
+                // Check if user already exists
+                const [existingUser] = await db
+                    .select()
+                    .from(users)
+                    .where(eq(users.email, email))
+                    .limit(1);
+
+                if (existingUser) {
+                    // Update existing user with Google info if not already set
+                    if (!existingUser.emailVerified || !existingUser.image) {
+                        await db
+                            .update(users)
+                            .set({
+                                emailVerified: existingUser.emailVerified || new Date(),
+                                image: existingUser.image || user.image || null,
+                                updatedAt: new Date(),
+                            })
+                            .where(eq(users.id, existingUser.id));
+                    }
+                } else {
+                    // Create new user from Google account
+                    await db.insert(users).values({
+                        name: user.name || "Google User",
+                        email: email,
+                        password: null, // No password for OAuth users
+                        role: "user",
+                        emailVerified: new Date(), // Google emails are pre-verified
+                        image: user.image || null,
+                    });
+                }
+            }
+
+            return true;
+        },
+        async jwt({ token, user, account }) {
+            // On initial sign-in, get user data from DB
+            if (user && user.email) {
+                const [dbUser] = await db
+                    .select()
+                    .from(users)
+                    .where(eq(users.email, user.email.toLowerCase()))
+                    .limit(1);
+
+                if (dbUser) {
+                    token.id = dbUser.id;
+                    token.role = dbUser.role;
+                }
             }
             return token;
         },

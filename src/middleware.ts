@@ -9,7 +9,7 @@ const protectedRoutes = ["/dashboard", "/dashboard/:path*"];
 const adminRoutes = ["/admin", "/admin/:path*"];
 
 // Routes that should redirect to dashboard if already logged in
-const authRoutes = ["/login", "/signup"];
+const authRoutes = ["/login", "/signup", "/verify-email"];
 
 export default auth((req) => {
     const { nextUrl } = req;

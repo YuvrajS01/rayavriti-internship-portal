@@ -102,6 +102,18 @@ export const authRateLimiter = new InMemoryRateLimiter(5, 60 * 1000);
 export const signupRateLimiter = new InMemoryRateLimiter(3, 60 * 60 * 1000);
 
 /**
+ * OTP rate limiter: 3 requests per 10 minutes per email
+ * Prevents OTP abuse
+ */
+export const otpRateLimiter = new InMemoryRateLimiter(3, 10 * 60 * 1000);
+
+/**
+ * OTP verification rate limiter: 5 attempts per 10 minutes per email
+ * Prevents brute-force OTP guessing
+ */
+export const otpVerifyRateLimiter = new InMemoryRateLimiter(5, 10 * 60 * 1000);
+
+/**
  * API rate limiter: 100 requests per minute per IP
  * General API protection
  */

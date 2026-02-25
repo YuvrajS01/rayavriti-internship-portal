@@ -9,7 +9,7 @@ export const users = pgTable('users', {
   name: varchar('name', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }).unique().notNull(),
   mobile: varchar('mobile', { length: 20 }).unique(),
-  password: varchar('password', { length: 255 }).notNull(),
+  password: varchar('password', { length: 255 }), // Nullable for OAuth users
   role: varchar('role', { length: 20 }).default('user').notNull(), // 'user' | 'admin'
   emailVerified: timestamp('email_verified'),
   image: varchar('image', { length: 500 }),
@@ -27,7 +27,7 @@ export const courses = pgTable('courses', {
   description: text('description'),
   shortDescription: varchar('short_description', { length: 500 }),
   thumbnail: varchar('thumbnail', { length: 500 }),
-  
+
   // Course content structure
   syllabus: jsonb('syllabus').$type<{
     modules: {
@@ -39,17 +39,17 @@ export const courses = pgTable('courses', {
       }[];
     }[];
   }>(),
-  
+
   // Course metadata
   mode: varchar('mode', { length: 20 }).notNull(), // 'online' | 'offline'
   fee: decimal('fee', { precision: 10, scale: 2 }).default('0').notNull(),
   duration: varchar('duration', { length: 100 }),
   youtubePlaylistUrl: varchar('youtube_playlist_url', { length: 500 }),
-  
+
   // Status
   isActive: boolean('is_active').default(true).notNull(),
   isFeatured: boolean('is_featured').default(false).notNull(),
-  
+
   // Timestamps
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -62,10 +62,10 @@ export const enrollments = pgTable('enrollments', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   courseId: uuid('course_id').references(() => courses.id, { onDelete: 'cascade' }).notNull(),
-  
+
   status: varchar('status', { length: 20 }).default('pending').notNull(), // 'pending' | 'active' | 'completed'
   progressPercentage: integer('progress_percentage').default(0).notNull(),
-  
+
   enrolledAt: timestamp('enrolled_at').defaultNow().notNull(),
   completedAt: timestamp('completed_at'),
 });
@@ -76,13 +76,13 @@ export const enrollments = pgTable('enrollments', {
 export const progress = pgTable('progress', {
   id: uuid('id').primaryKey().defaultRandom(),
   enrollmentId: uuid('enrollment_id').references(() => enrollments.id, { onDelete: 'cascade' }).notNull(),
-  
+
   moduleIndex: integer('module_index').notNull(),
   lessonIndex: integer('lesson_index').notNull(),
-  
+
   isCompleted: boolean('is_completed').default(false).notNull(),
   completedAt: timestamp('completed_at'),
-  
+
   // For tracking watch time (future enhancement)
   watchedSeconds: integer('watched_seconds').default(0),
 });
@@ -94,14 +94,14 @@ export const payments = pgTable('payments', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   courseId: uuid('course_id').references(() => courses.id, { onDelete: 'cascade' }).notNull(),
-  
+
   amount: decimal('amount', { precision: 10, scale: 2 }).notNull(),
   transactionId: varchar('transaction_id', { length: 100 }),
   screenshotUrl: varchar('screenshot_url', { length: 500 }),
-  
+
   status: varchar('status', { length: 20 }).default('pending').notNull(), // 'pending' | 'approved' | 'rejected'
   adminNotes: text('admin_notes'),
-  
+
   createdAt: timestamp('created_at').defaultNow().notNull(),
   verifiedAt: timestamp('verified_at'),
   verifiedBy: uuid('verified_by').references(() => users.id),
@@ -113,18 +113,30 @@ export const payments = pgTable('payments', {
 export const certificates = pgTable('certificates', {
   id: uuid('id').primaryKey().defaultRandom(),
   certificateId: varchar('certificate_id', { length: 50 }).unique().notNull(), // Human-readable ID like "RAY-2026-001234"
-  
+
   userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
   courseId: uuid('course_id').references(() => courses.id, { onDelete: 'cascade' }).notNull(),
   enrollmentId: uuid('enrollment_id').references(() => enrollments.id, { onDelete: 'cascade' }).notNull(),
-  
+
   userName: varchar('user_name', { length: 255 }).notNull(), // Snapshot at time of issue
   courseName: varchar('course_name', { length: 255 }).notNull(), // Snapshot at time of issue
-  
+
   issuedAt: timestamp('issued_at').defaultNow().notNull(),
   isRevoked: boolean('is_revoked').default(false).notNull(),
   revokedAt: timestamp('revoked_at'),
   revokedReason: text('revoked_reason'),
+});
+
+// ================================================
+// VERIFICATION TOKENS TABLE (for OTP)
+// ================================================
+export const verificationTokens = pgTable('verification_tokens', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').references(() => users.id, { onDelete: 'cascade' }).notNull(),
+  token: varchar('token', { length: 6 }).notNull(), // 6-digit OTP
+  type: varchar('type', { length: 20 }).notNull(), // 'email'
+  expiresAt: timestamp('expires_at').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
 // ================================================
@@ -134,6 +146,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   enrollments: many(enrollments),
   payments: many(payments),
   certificates: many(certificates),
+  verificationTokens: many(verificationTokens),
 }));
 
 export const coursesRelations = relations(courses, ({ many }) => ({
@@ -188,6 +201,13 @@ export const certificatesRelations = relations(certificates, ({ one }) => ({
   }),
 }));
 
+export const verificationTokensRelations = relations(verificationTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [verificationTokens.userId],
+    references: [users.id],
+  }),
+}));
+
 // ================================================
 // TYPE EXPORTS
 // ================================================
@@ -203,3 +223,5 @@ export type Payment = typeof payments.$inferSelect;
 export type NewPayment = typeof payments.$inferInsert;
 export type Certificate = typeof certificates.$inferSelect;
 export type NewCertificate = typeof certificates.$inferInsert;
+export type VerificationToken = typeof verificationTokens.$inferSelect;
+export type NewVerificationToken = typeof verificationTokens.$inferInsert;

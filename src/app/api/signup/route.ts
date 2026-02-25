@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { db, users } from "@/db";
+import { db, users, verificationTokens } from "@/db";
 import { eq, or } from "drizzle-orm";
 import { signupSchema } from "@/lib/validations";
 import { signupRateLimiter, getClientIP, rateLimitHeaders } from "@/lib/ratelimit";
+import { generateOTP, sendOTPEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
     try {
@@ -62,7 +63,7 @@ export async function POST(req: NextRequest) {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 12);
 
-        // Create user
+        // Create user (emailVerified is null by default)
         const [newUser] = await db
             .insert(users)
             .values({
@@ -78,8 +79,28 @@ export async function POST(req: NextRequest) {
                 email: users.email,
             });
 
+        // Generate and send OTP for email verification
+        const otp = generateOTP();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        await db.insert(verificationTokens).values({
+            userId: newUser.id,
+            token: otp,
+            type: "email",
+            expiresAt,
+        });
+
+        // Send verification email (non-blocking - don't fail signup if email fails)
+        sendOTPEmail(email.toLowerCase(), otp, name).catch((err) => {
+            console.error("Failed to send verification email:", err);
+        });
+
         return NextResponse.json(
-            { message: "Account created successfully", user: newUser },
+            {
+                message: "Account created successfully! Please verify your email.",
+                user: newUser,
+                requiresVerification: true,
+            },
             { status: 201 }
         );
     } catch (error) {

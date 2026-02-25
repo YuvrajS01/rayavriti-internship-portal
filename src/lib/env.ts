@@ -17,6 +17,14 @@ const serverEnvSchema = z.object({
     UPI_ID: z.string().min(1, "UPI_ID is required"),
     UPI_MERCHANT_NAME: z.string().min(1, "UPI_MERCHANT_NAME is required"),
 
+    // Email (Resend)
+    RESEND_API_KEY: z.string().optional(),
+    EMAIL_FROM: z.string().optional(),
+
+    // Google OAuth
+    GOOGLE_CLIENT_ID: z.string().optional(),
+    GOOGLE_CLIENT_SECRET: z.string().optional(),
+
     // App
     NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });
