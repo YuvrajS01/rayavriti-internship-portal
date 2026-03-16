@@ -14,9 +14,20 @@ interface EnrollPageProps {
         price: number;
         mode: string;
     };
+    settings?: {
+        upiId: string;
+        merchantName: string;
+        qrUrl?: string;
+    };
 }
 
-export default function EnrollmentPaymentForm({ course }: { course: EnrollPageProps["course"] }) {
+export default function EnrollmentPaymentForm({ 
+    course, 
+    settings = { upiId: process.env.NEXT_PUBLIC_UPI_ID || "example@upi", merchantName: "Rayavriti" } 
+}: { 
+    course: EnrollPageProps["course"], 
+    settings?: EnrollPageProps["settings"] 
+}) {
     const router = useRouter();
     const [step, setStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,9 +35,25 @@ export default function EnrollmentPaymentForm({ course }: { course: EnrollPagePr
     const [transactionId, setTransactionId] = useState("");
     const [error, setError] = useState("");
 
-    const upiId = process.env.NEXT_PUBLIC_UPI_ID || "example@upi";
-    const merchantName = process.env.NEXT_PUBLIC_UPI_MERCHANT || "Rayavriti";
+    const upiId = settings.upiId;
+    const merchantName = settings.merchantName;
     const upiLink = `upi://pay?pa=${upiId}&pn=${merchantName}&am=${course.price}&cu=INR&tn=Course-${course.id}`;
+
+    // Transform Google Drive links to direct download links
+    const getDirectQrUrl = (url?: string) => {
+        if (!url) return undefined;
+        if (url.includes("drive.google.com") || url.includes("drive.usercontent.google.com")) {
+            // Match ID from various formats (/d/ID, id=ID, ...)
+            const match = url.match(/\/d\/([^/&?#]+)/) || url.match(/[?&]id=([^&]+)/);
+            if (match && match[1]) {
+                // thumbnail API is more robust for direct image embedding
+                return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
+            }
+        }
+        return url;
+    };
+
+    const qrUrl = getDirectQrUrl(settings.qrUrl);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -90,10 +117,21 @@ export default function EnrollmentPaymentForm({ course }: { course: EnrollPagePr
                     </p>
 
                     <div className="bg-white rounded-lg p-6 text-center mb-6">
-                        {/* QR Code placeholder - would use qrcode.react in production */}
-                        <div className="w-48 h-48 mx-auto bg-gray-100 rounded-lg flex items-center justify-center mb-4">
-                            <QrCode className="w-24 h-24 text-gray-400" />
-                        </div>
+                        {qrUrl ? (
+                            <div className="relative w-48 h-48 mx-auto mb-4">
+                                <Image 
+                                    src={qrUrl} 
+                                    alt="Payment QR Code" 
+                                    fill
+                                    className="object-contain"
+                                    unoptimized // For foreign domains to avoid processing issues
+                                />
+                            </div>
+                        ) : (
+                            <div className="w-48 h-48 mx-auto bg-gray-100 rounded-lg flex items-center justify-center mb-4">
+                                <QrCode className="w-24 h-24 text-gray-400" />
+                            </div>
+                        )}
                         <p className="text-gray-600 text-sm">Scan with any UPI app</p>
                     </div>
 
@@ -153,14 +191,13 @@ export default function EnrollmentPaymentForm({ course }: { course: EnrollPagePr
                         </div>
 
                         <div>
-                            <label className="label">Payment Screenshot URL</label>
+                            <label className="label">Payment Screenshot URL (Optional)</label>
                             <input
                                 type="url"
                                 value={proofUrl}
                                 onChange={(e) => setProofUrl(e.target.value)}
                                 className="input"
                                 placeholder="https://example.com/screenshot.png"
-                                required
                             />
                             <p className="text-xs text-foreground-muted mt-1">
                                 Upload your screenshot to a service like Imgur and paste the URL here.
@@ -168,7 +205,7 @@ export default function EnrollmentPaymentForm({ course }: { course: EnrollPagePr
                         </div>
                     </div>
 
-                    <div className="flex gap-4 mt-6">
+                    <div className="gap-4 mt-6 flex">
                         <button
                             type="button"
                             onClick={() => setStep(1)}

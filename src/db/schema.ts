@@ -141,6 +141,15 @@ export const verificationTokens = pgTable('verification_tokens', {
 });
 
 // ================================================
+// SITE SETTINGS TABLE
+// ================================================
+export const siteSettings = pgTable('site_settings', {
+  key: varchar('key', { length: 100 }).primaryKey(),
+  value: text('value').notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// ================================================
 // RELATIONS
 // ================================================
 export const usersRelations = relations(users, ({ many }) => ({
@@ -226,3 +235,5 @@ export type Certificate = typeof certificates.$inferSelect;
 export type NewCertificate = typeof certificates.$inferInsert;
 export type VerificationToken = typeof verificationTokens.$inferSelect;
 export type NewVerificationToken = typeof verificationTokens.$inferInsert;
+export type SiteSetting = typeof siteSettings.$inferSelect;
+export type NewSiteSetting = typeof siteSettings.$inferInsert;

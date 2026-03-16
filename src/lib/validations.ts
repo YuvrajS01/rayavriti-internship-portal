@@ -86,7 +86,7 @@ export type CourseInput = z.infer<typeof courseSchema>;
 export const paymentSchema = z.object({
     courseId: z.string().uuid("Invalid course ID"),
     transactionId: z.string().min(1, "Transaction ID is required"),
-    screenshotUrl: z.string().url("Invalid screenshot URL").optional(),
+    screenshotUrl: z.string().url("Invalid screenshot URL").optional().or(z.literal("")),
 });
 
 export const paymentVerificationSchema = z.object({

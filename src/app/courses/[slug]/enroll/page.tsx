@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { db, courses, enrollments } from "@/db";
 import { eq, and } from "drizzle-orm";
 import EnrollmentPaymentForm from "@/components/EnrollmentPaymentForm";
+import { getSettings } from "@/lib/actions/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +57,7 @@ export default async function EnrollPage({
     }
 
     // Free course - auto-enroll
+    // Free course - auto-enroll
     const courseFee = parseFloat(course.fee) || 0;
     if (courseFee === 0) {
         // Create enrollment directly
@@ -66,6 +68,8 @@ export default async function EnrollPage({
         });
         redirect(`/dashboard/courses/${slug}`);
     }
+
+    const settings = await getSettings();
 
     return (
         <div className="min-h-[calc(100vh-8rem)] py-12">
@@ -94,6 +98,11 @@ export default async function EnrollPage({
                         title: course.title,
                         price: courseFee,
                         mode: course.mode,
+                    }}
+                    settings={{
+                        upiId: settings.upiId,
+                        merchantName: settings.upiMerchantName,
+                        qrUrl: settings.paymentQrUrl,
                     }}
                 />
             </div>

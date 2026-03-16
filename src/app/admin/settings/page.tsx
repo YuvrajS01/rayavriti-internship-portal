@@ -1,24 +1,43 @@
 "use client";
 
-import { useState } from "react";
-import { Settings, Save, Globe, CreditCard, Bell, Shield, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Settings, Save, Globe, CreditCard, Bell, Shield, Loader2, QrCode } from "lucide-react";
 
 export default function AdminSettingsPage() {
     const [isLoading, setIsLoading] = useState(false);
+    const [isFetching, setIsFetching] = useState(true);
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
     const [settings, setSettings] = useState({
-        siteName: "Rayavriti Platform",
-        siteDescription: "Master the Future of Technology",
-        contactEmail: "admin@rayavriti.com",
-        supportPhone: "+91 9999999999",
-        upiId: "your-upi-id@bank",
-        upiMerchantName: "Rayavriti",
+        siteName: "",
+        siteDescription: "",
+        contactEmail: "",
+        supportPhone: "",
+        upiId: "",
+        upiMerchantName: "",
+        paymentQrUrl: "",
         enablePayments: true,
         enableCertificates: true,
         enableEmailNotifications: true,
         maintenanceMode: false,
     });
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const response = await fetch("/api/admin/settings");
+                if (response.ok) {
+                    const data = await response.json();
+                    setSettings(data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch settings:", error);
+            } finally {
+                setIsFetching(false);
+            }
+        };
+        fetchSettings();
+    }, []);
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -26,15 +45,29 @@ export default function AdminSettingsPage() {
         setMessage(null);
 
         try {
-            // In a real app, this would save to database/env
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            const response = await fetch("/api/admin/settings", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(settings),
+            });
+
+            if (!response.ok) throw new Error("Failed to save settings");
+
             setMessage({ type: "success", text: "Settings saved successfully!" });
-        } catch {
+        } catch (err) {
             setMessage({ type: "error", text: "Failed to save settings" });
         } finally {
             setIsLoading(false);
         }
     };
+
+    if (isFetching) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="w-8 h-8 animate-spin text-[#D9FD3A]" />
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -139,6 +172,23 @@ export default function AdminSettingsPage() {
                                 onChange={(e) => setSettings(prev => ({ ...prev, upiMerchantName: e.target.value }))}
                                 className="input"
                             />
+                        </div>
+                        <div className="md:col-span-2">
+                            <label htmlFor="paymentQrUrl" className="label flex items-center gap-2">
+                                <QrCode className="w-4 h-4" />
+                                Payment QR Code URL
+                            </label>
+                            <input
+                                type="url"
+                                id="paymentQrUrl"
+                                value={settings.paymentQrUrl}
+                                onChange={(e) => setSettings(prev => ({ ...prev, paymentQrUrl: e.target.value }))}
+                                className="input"
+                                placeholder="https://example.com/qr-code.png"
+                            />
+                            <p className="text-xs text-foreground-muted mt-1">
+                                Upload your UPI QR code to a service like Imgur and paste the direct image URL here.
+                            </p>
                         </div>
                     </div>
                 </div>
