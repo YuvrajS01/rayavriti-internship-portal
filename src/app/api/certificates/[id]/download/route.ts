@@ -65,6 +65,26 @@ export async function GET(
       align-items: center;
       min-height: 100vh;
     }
+
+    .print-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10;
+      border: 0;
+      border-radius: 8px;
+      background: #11110B;
+      color: #D9FD3A;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+    }
+
+    .print-btn:hover {
+      background: #1a1a14;
+    }
     
     .certificate {
       width: 100%;
@@ -208,6 +228,9 @@ export async function GET(
         background: none;
         padding: 0;
       }
+      .print-btn {
+        display: none;
+      }
       .certificate {
         border-radius: 0;
         max-width: none;
@@ -218,6 +241,7 @@ export async function GET(
   </style>
 </head>
 <body>
+  <button class="print-btn" type="button" onclick="window.print()">Print</button>
   <div class="certificate">
     <div class="logo">RAYAVRITI</div>
     <div class="title">Certificate</div>
