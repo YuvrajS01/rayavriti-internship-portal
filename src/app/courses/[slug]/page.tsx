@@ -5,6 +5,7 @@ import { db, courses } from "@/db";
 import { eq } from "drizzle-orm";
 import { formatCurrency } from "@/lib/utils";
 import { auth } from "@/auth";
+import { Linkify } from "@/components/Linkify";
 
 // Prevent static prerendering - requires database connection
 export const dynamic = "force-dynamic";
@@ -81,9 +82,9 @@ export default async function CourseDetailPage({
 
                             <h1 className="text-3xl sm:text-4xl font-bold mb-4">{course.title}</h1>
 
-                            <p className="text-foreground-muted text-lg leading-relaxed mb-6">
-                                {course.shortDescription || course.description}
-                            </p>
+                            <div className="text-foreground-muted text-lg leading-relaxed mb-6">
+                                <Linkify text={(course.shortDescription || course.description) ?? ""} />
+                            </div>
 
                             {/* Meta */}
                             <div className="flex flex-wrap gap-4 text-sm text-foreground-muted">
@@ -219,7 +220,7 @@ export default async function CourseDetailPage({
                             <div className="mb-12">
                                 <h2 className="text-2xl font-bold mb-4">About This Course</h2>
                                 <div className="prose prose-invert max-w-none text-foreground-muted">
-                                    <p className="whitespace-pre-line">{course.description}</p>
+                                    <Linkify text={course.description ?? ""} />
                                 </div>
                             </div>
                         )}
