@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Filter, Clock, DollarSign, Monitor, Users } from "lucide-react";
+import { Filter, Clock, Monitor, Users } from "lucide-react";
 import { db, courses } from "@/db";
 import { eq, and } from "drizzle-orm";
 import { formatCurrency, truncate } from "@/lib/utils";
@@ -98,7 +98,6 @@ function CourseCard({ course }: { course: typeof courses.$inferSelect }) {
                     </span>
                 )}
                 <span className={`badge ${isFree ? "badge-success" : ""}`}>
-                    <DollarSign className="w-3 h-3 mr-1" />
                     <div className="flex items-center gap-1.5">
                         {isFree ? (
                             "Free"

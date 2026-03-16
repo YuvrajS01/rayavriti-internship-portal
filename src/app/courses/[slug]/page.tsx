@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Clock, DollarSign, Monitor, Users, Play, ChevronDown, ChevronRight } from "lucide-react";
+import { ArrowLeft, Clock, Monitor, Users, Play, ChevronDown, ChevronRight } from "lucide-react";
 import { db, courses } from "@/db";
 import { eq } from "drizzle-orm";
 import { formatCurrency } from "@/lib/utils";
@@ -100,7 +100,6 @@ export default async function CourseDetailPage({
                                     </div>
                                 )}
                                 <div className="flex items-center gap-2">
-                                    <DollarSign className="w-4 h-4" />
                                     {isFree ? (
                                         "Free"
                                     ) : (
