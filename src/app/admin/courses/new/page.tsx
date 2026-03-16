@@ -95,6 +95,15 @@ export default function CreateCoursePage() {
         setError("");
 
         try {
+            // Filter out empty modules and empty lessons to avoid Zod min(1) validation errors
+            const filteredModules = modules
+                .filter((m) => m.title.trim() !== "")
+                .map((m) => ({
+                    ...m,
+                    lessons: m.lessons.filter((l) => l.title.trim() !== ""),
+                }))
+                .filter((m) => m.lessons.length > 0);
+
             const response = await fetch("/api/courses", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -102,7 +111,7 @@ export default function CreateCoursePage() {
                     ...formData,
                     fee: parseFloat(formData.fee) || 0,
                     mrp: parseFloat(formData.mrp) || 0,
-                    syllabus: { modules },
+                    syllabus: filteredModules.length > 0 ? { modules: filteredModules } : undefined,
                 }),
             });
 

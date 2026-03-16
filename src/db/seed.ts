@@ -16,6 +16,7 @@ async function seed() {
             password: hashedPassword,
             role: "admin",
             mobile: "9999999999",
+            emailVerified: new Date(), // Required for credentials login
         })
         .onConflictDoNothing()
         .returning();
