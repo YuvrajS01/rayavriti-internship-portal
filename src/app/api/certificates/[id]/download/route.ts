@@ -4,6 +4,15 @@ import { eq, and } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
+function escapeHtml(value: string): string {
+    return value
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
 // Download certificate as a simple HTML page (can be printed/saved as PDF)
 export async function GET(
     request: Request,
@@ -38,6 +47,11 @@ export async function GET(
             month: "long",
             year: "numeric",
         });
+        const safeUserName = escapeHtml(cert.userName);
+        const safeCourseName = escapeHtml(cert.courseName);
+        const safeCertificateId = escapeHtml(cert.certificateId);
+        const safeIssueDate = escapeHtml(issueDate);
+        const safeVerifyQrUrl = escapeHtml(verifyQrUrl);
 
         // Generate HTML certificate
         const html = `
@@ -46,7 +60,7 @@ export async function GET(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Certificate - ${cert.userName}</title>
+  <title>Certificate - ${safeUserName}</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
     
@@ -248,26 +262,26 @@ export async function GET(
     <div class="subtitle">of Completion</div>
     
     <div class="presented">This is to certify that</div>
-    <div class="name">${cert.userName}</div>
+    <div class="name">${safeUserName}</div>
     
     <div class="description">
       has successfully completed the course requirements and demonstrated proficiency in
     </div>
     
-    <div class="course">${cert.courseName}</div>
+    <div class="course">${safeCourseName}</div>
     
     <div class="footer">
       <div class="footer-item">
         <div class="footer-label">Issue Date</div>
-        <div class="footer-value">${issueDate}</div>
+        <div class="footer-value">${safeIssueDate}</div>
       </div>
       <div class="footer-item verify">
         <div class="footer-label">Scan to Verify</div>
-        <img class="verify-qr" src="${verifyQrUrl}" alt="QR code to verify certificate ${cert.certificateId}" />
+        <img class="verify-qr" src="${safeVerifyQrUrl}" alt="QR code to verify certificate ${safeCertificateId}" />
       </div>
     </div>
     
-    <div class="cert-id">Certificate ID: ${cert.certificateId}</div>
+    <div class="cert-id">Certificate ID: ${safeCertificateId}</div>
   </div>
 </body>
 </html>
@@ -276,6 +290,8 @@ export async function GET(
         return new NextResponse(html, {
             headers: {
                 "Content-Type": "text/html",
+                "X-Content-Type-Options": "nosniff",
+                "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; script-src 'unsafe-inline';",
                 "Content-Disposition": `inline; filename="${cert.certificateId}.html"`,
             },
         });

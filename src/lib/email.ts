@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { randomInt } from "crypto";
 
 const FROM_EMAIL = process.env.EMAIL_FROM || "onboarding@resend.dev";
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "Rayavriti Learning";
@@ -39,7 +40,7 @@ export async function sendOTPEmail(email: string, otp: string, name: string): Pr
  * Generate a 6 digit OTP
  */
 export function generateOTP(): string {
-    return Math.floor(100000 + Math.random() * 900000).toString();
+    return randomInt(100000, 1000000).toString();
 }
 
 /**

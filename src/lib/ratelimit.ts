@@ -18,6 +18,12 @@ interface RateLimitResult {
     reset: number;
 }
 
+function firstHeaderIP(value: string | null): string | null {
+    if (!value) return null;
+    const ip = value.split(",")[0]?.trim();
+    return ip || null;
+}
+
 class InMemoryRateLimiter {
     private records: Map<string, RateLimitRecord> = new Map();
     private maxRequests: number;
@@ -124,38 +130,43 @@ export const apiRateLimiter = new InMemoryRateLimiter(100, 60 * 1000);
  * Handles various proxy configurations
  */
 export function getClientIP(request: Request): string {
-    // Check common headers for real IP (when behind proxies)
-    const forwardedFor = request.headers.get("x-forwarded-for");
-    if (forwardedFor) {
-        // Get the first IP in the chain (original client)
-        return forwardedFor.split(",")[0].trim();
+    // Prefer platform-set headers over generic forwarding headers.
+    const platformIP =
+        firstHeaderIP(request.headers.get("x-vercel-forwarded-for")) ||
+        firstHeaderIP(request.headers.get("cf-connecting-ip")) ||
+        firstHeaderIP(request.headers.get("x-real-ip"));
+
+    if (platformIP) {
+        return platformIP;
     }
 
-    const realIP = request.headers.get("x-real-ip");
-    if (realIP) {
-        return realIP;
+    // Generic forwarding headers are easily spoofed unless explicitly trusted.
+    if (process.env.TRUST_X_FORWARDED_FOR === "true") {
+        const forwardedFor = firstHeaderIP(request.headers.get("x-forwarded-for"));
+        if (forwardedFor) {
+            return forwardedFor;
+        }
     }
 
-    // Vercel-specific header
-    const vercelForwardedFor = request.headers.get("x-vercel-forwarded-for");
-    if (vercelForwardedFor) {
-        return vercelForwardedFor.split(",")[0].trim();
-    }
-
-    // Fallback (shouldn't be reached in production)
-    return "127.0.0.1";
+    // Stable fallback identifier.
+    return "unknown";
 }
 
 /**
  * Create rate limit response headers
  */
 export function rateLimitHeaders(result: RateLimitResult): HeadersInit {
-    return {
+    const headers: HeadersInit = {
         "X-RateLimit-Limit": result.limit.toString(),
         "X-RateLimit-Remaining": result.remaining.toString(),
         "X-RateLimit-Reset": result.reset.toString(),
-        "Retry-After": result.success
-            ? undefined!
-            : Math.ceil((result.reset - Date.now()) / 1000).toString(),
     };
+
+    if (!result.success) {
+        (headers as Record<string, string>)["Retry-After"] = Math.ceil(
+            (result.reset - Date.now()) / 1000
+        ).toString();
+    }
+
+    return headers;
 }
