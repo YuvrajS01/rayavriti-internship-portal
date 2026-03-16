@@ -17,6 +17,7 @@ export default function CreateCoursePage() {
         description: "",
         mode: "online",
         fee: "",
+        mrp: "",
         duration: "",
         thumbnail: "",
         isActive: true,
@@ -100,6 +101,7 @@ export default function CreateCoursePage() {
                 body: JSON.stringify({
                     ...formData,
                     fee: parseFloat(formData.fee) || 0,
+                    mrp: parseFloat(formData.mrp) || 0,
                     syllabus: { modules },
                 }),
             });
@@ -227,7 +229,7 @@ export default function CreateCoursePage() {
                         </label>
 
                         <div>
-                            <label className="label">Fee (₹)</label>
+                            <label className="label">Payable Fee (₹)</label>
                             <input
                                 type="number"
                                 name="fee"
@@ -235,6 +237,19 @@ export default function CreateCoursePage() {
                                 onChange={handleInputChange}
                                 className="input"
                                 placeholder="0 for free"
+                                min="0"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="label">MRP (₹) - Strike through price</label>
+                            <input
+                                type="number"
+                                name="mrp"
+                                value={formData.mrp}
+                                onChange={handleInputChange}
+                                className="input"
+                                placeholder="e.g., 4999"
                                 min="0"
                             />
                         </div>

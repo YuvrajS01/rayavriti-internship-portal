@@ -140,6 +140,7 @@ export async function PUT(
                 syllabus: data.syllabus ?? existing.syllabus,
                 mode: data.mode ?? existing.mode,
                 fee: data.fee?.toString() ?? existing.fee,
+                mrp: data.mrp?.toString() ?? existing.mrp,
                 duration: data.duration ?? existing.duration,
                 isActive: data.isActive ?? existing.isActive,
                 isFeatured: data.isFeatured ?? existing.isFeatured,

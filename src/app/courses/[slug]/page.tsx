@@ -101,7 +101,18 @@ export default async function CourseDetailPage({
                                 )}
                                 <div className="flex items-center gap-2">
                                     <DollarSign className="w-4 h-4" />
-                                    {isFree ? "Free" : formatCurrency(course.fee)}
+                                    {isFree ? (
+                                        "Free"
+                                    ) : (
+                                        <div className="flex items-center gap-2">
+                                            <span>{formatCurrency(course.fee)}</span>
+                                            {parseFloat(course.mrp) > parseFloat(course.fee) && (
+                                                <span className="text-sm line-through opacity-60">
+                                                    {formatCurrency(course.mrp)}
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -125,7 +136,17 @@ export default async function CourseDetailPage({
                                     {isFree ? (
                                         <div className="text-3xl font-bold text-success">Free</div>
                                     ) : (
-                                        <div className="text-3xl font-bold">{formatCurrency(course.fee)}</div>
+                                        <div className="flex flex-col gap-1">
+                                            <div className="text-3xl font-bold">{formatCurrency(course.fee)}</div>
+                                            {parseFloat(course.mrp) > parseFloat(course.fee) && (
+                                                <div className="text-sm text-foreground-muted">
+                                                    <span className="line-through">{formatCurrency(course.mrp)}</span>
+                                                    <span className="ml-2 text-accent-primary">
+                                                        {Math.round((1 - parseFloat(course.fee) / parseFloat(course.mrp)) * 100)}% off
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
 

@@ -25,6 +25,7 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
         description: "",
         mode: "online",
         fee: "",
+        mrp: "",
         duration: "",
         thumbnail: "",
         isActive: true,
@@ -53,6 +54,7 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
                     description: course.description || "",
                     mode: course.mode || "online",
                     fee: course.fee || "0",
+                    mrp: course.mrp || "0",
                     duration: course.duration || "",
                     thumbnail: course.thumbnail || "",
                     isActive: course.isActive ?? true,
@@ -137,6 +139,7 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
                 body: JSON.stringify({
                     ...formData,
                     fee: formData.fee,
+                    mrp: formData.mrp,
                     syllabus: { modules },
                 }),
             });
@@ -254,7 +257,7 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
                         </div>
 
                         <div>
-                            <label className="label">Fee (₹)</label>
+                            <label className="label">Payable Fee (₹)</label>
                             <input
                                 type="number"
                                 name="fee"
@@ -262,6 +265,19 @@ export default function EditCoursePage({ params }: { params: Promise<{ id: strin
                                 onChange={handleInputChange}
                                 className="input"
                                 placeholder="0 for free"
+                                min="0"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="label">MRP (₹) - Strike through price</label>
+                            <input
+                                type="number"
+                                name="mrp"
+                                value={formData.mrp}
+                                onChange={handleInputChange}
+                                className="input"
+                                placeholder="e.g., 4999"
                                 min="0"
                             />
                         </div>

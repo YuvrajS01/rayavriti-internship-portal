@@ -99,7 +99,20 @@ function CourseCard({ course }: { course: typeof courses.$inferSelect }) {
                 )}
                 <span className={`badge ${isFree ? "badge-success" : ""}`}>
                     <DollarSign className="w-3 h-3 mr-1" />
-                    {isFree ? "Free" : formatCurrency(course.fee)}
+                    <div className="flex items-center gap-1.5">
+                        {isFree ? (
+                            "Free"
+                        ) : (
+                            <>
+                                <span>{formatCurrency(course.fee)}</span>
+                                {parseFloat(course.mrp) > parseFloat(course.fee) && (
+                                    <span className="text-[10px] text-foreground-muted line-through opacity-70">
+                                        {formatCurrency(course.mrp)}
+                                    </span>
+                                )}
+                            </>
+                        )}
+                    </div>
                 </span>
             </div>
         </Link>

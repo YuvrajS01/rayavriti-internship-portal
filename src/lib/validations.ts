@@ -68,6 +68,7 @@ export const courseSchema = z.object({
     thumbnail: z.string().url().optional().or(z.literal("")),
     mode: z.enum(["online", "offline"]),
     fee: z.coerce.number().min(0, "Fee must be a positive number"),
+    mrp: z.coerce.number().min(0, "MRP must be a positive number").optional(),
     duration: z.string().optional(),
     youtubePlaylistUrl: z.string().url().optional().or(z.literal("")),
     syllabus: z.object({
@@ -137,6 +138,7 @@ export const courseUpdateSchema = z.object({
     thumbnail: z.string().url().optional().or(z.literal("")),
     mode: z.enum(["online", "offline"]).optional(),
     fee: z.coerce.number().min(0, "Fee must be a positive number").optional(),
+    mrp: z.coerce.number().min(0, "MRP must be a positive number").optional(),
     duration: z.string().optional(),
     youtubePlaylistUrl: z.string().url().optional().or(z.literal("")),
     syllabus: z.object({

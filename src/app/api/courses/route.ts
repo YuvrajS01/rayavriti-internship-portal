@@ -91,6 +91,7 @@ export async function POST(req: NextRequest) {
                 thumbnail: data.thumbnail || null,
                 mode: data.mode,
                 fee: data.fee.toString(),
+                mrp: (data.mrp || 0).toString(),
                 duration: data.duration || null,
                 youtubePlaylistUrl: data.youtubePlaylistUrl || null,
                 syllabus: data.syllabus || null,

@@ -43,6 +43,7 @@ export const courses = pgTable('courses', {
   // Course metadata
   mode: varchar('mode', { length: 20 }).notNull(), // 'online' | 'offline'
   fee: decimal('fee', { precision: 10, scale: 2 }).default('0').notNull(),
+  mrp: decimal('mrp', { precision: 10, scale: 2 }).default('0').notNull(),
   duration: varchar('duration', { length: 100 }),
   youtubePlaylistUrl: varchar('youtube_playlist_url', { length: 500 }),
 
