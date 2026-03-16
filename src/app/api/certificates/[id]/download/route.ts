@@ -32,6 +32,7 @@ export async function GET(
         }
 
         const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/verify/${cert.certificateId}`;
+        const verifyQrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(verifyUrl)}`;
         const issueDate = new Date(cert.issuedAt).toLocaleDateString("en-IN", {
             day: "numeric",
             month: "long",
@@ -164,6 +165,12 @@ export async function GET(
     .footer-item {
       text-align: center;
     }
+
+    .footer-item.verify {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
     
     .footer-label {
       font-size: 11px;
@@ -177,6 +184,16 @@ export async function GET(
       font-size: 14px;
       font-weight: 500;
       color: #fff;
+    }
+
+    .verify-qr {
+      width: 110px;
+      height: 110px;
+      border-radius: 8px;
+      border: 1px solid rgba(217, 253, 58, 0.35);
+      background: #fff;
+      padding: 6px;
+      object-fit: cover;
     }
     
     .cert-id {
@@ -220,9 +237,9 @@ export async function GET(
         <div class="footer-label">Issue Date</div>
         <div class="footer-value">${issueDate}</div>
       </div>
-      <div class="footer-item">
-        <div class="footer-label">Verify At</div>
-        <div class="footer-value">${verifyUrl}</div>
+      <div class="footer-item verify">
+        <div class="footer-label">Scan to Verify</div>
+        <img class="verify-qr" src="${verifyQrUrl}" alt="QR code to verify certificate ${cert.certificateId}" />
       </div>
     </div>
     
